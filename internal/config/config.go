@@ -3,6 +3,8 @@ package config
 import (
 	"fmt"
 	"os"
+
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -16,7 +18,9 @@ type Config struct {
 }
 
 func Load() Config {
-	cfg := Config{
+	_ = godotenv.Load()
+
+	return Config{
 		GRPCPort:     getEnv("GRPC_PORT", "50051"),
 		PostgresHost: getEnv("POSTGRES_HOST", "127.0.0.1"),
 		PostgresPort: getEnv("POSTGRES_PORT", "5434"),
@@ -25,8 +29,6 @@ func Load() Config {
 		PostgresDB:   getEnv("POSTGRES_DB", "shipments"),
 		PostgresSSL:  getEnv("POSTGRES_SSLMODE", "disable"),
 	}
-
-	return cfg
 }
 
 func (c Config) PostgresDSN() string {
@@ -42,9 +44,9 @@ func (c Config) PostgresDSN() string {
 }
 
 func getEnv(key, fallback string) string {
-	val := os.Getenv(key)
-	if val == "" {
+	value := os.Getenv(key)
+	if value == "" {
 		return fallback
 	}
-	return val
+	return value
 }
