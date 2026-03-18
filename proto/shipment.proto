@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package shipment;
 
-option go_package = "vector-backend/proto/shipmentpb;shipmentpb";
+option go_package = "vektor-backend/proto/shipmentpb;shipmentpb";
 
 service ShipmentService {
   rpc CreateShipment(CreateShipmentRequest) returns (CreateShipmentResponse);
