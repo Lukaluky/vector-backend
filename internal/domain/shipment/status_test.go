@@ -1,109 +1,52 @@
 package shipment
 
-import (
-	"testing"
-	"time"
-)
+import "testing"
 
-func TestNewShipment_Success(t *testing.T) {
-	now := time.Now().UTC()
-
-	sh, evt, err := NewShipment(
-		"REF-001",
-		"Almaty",
-		"Astana",
-		"John Doe",
-		"TRUCK-01",
-		1000,
-		700,
-		now,
-	)
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
+func TestStatus_IsValid(t *testing.T) {
+	tests := []struct {
+		name   string
+		status Status
+		want   bool
+	}{
+		{"pending", StatusPending, true},
+		{"picked_up", StatusPickedUp, true},
+		{"in_transit", StatusInTransit, true},
+		{"delivered", StatusDelivered, true},
+		{"cancelled", StatusCancelled, true},
+		{"invalid", Status("unknown"), false},
 	}
 
-	if sh.Reference != "REF-001" {
-		t.Fatalf("expected reference REF-001, got %s", sh.Reference)
-	}
-
-	if sh.CurrentStatus != StatusPending {
-		t.Fatalf("expected status pending, got %s", sh.CurrentStatus)
-	}
-
-	if evt.Status != StatusPending {
-		t.Fatalf("expected initial event status pending, got %s", evt.Status)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.status.IsValid()
+			if got != tt.want {
+				t.Fatalf("expected %v, got %v", tt.want, got)
+			}
+		})
 	}
 }
 
-func TestNewShipment_InvalidReference(t *testing.T) {
-	now := time.Now().UTC()
-
-	_, _, err := NewShipment(
-		"",
-		"Almaty",
-		"Astana",
-		"John Doe",
-		"TRUCK-01",
-		1000,
-		700,
-		now,
-	)
-
-	if err != ErrInvalidReference {
-		t.Fatalf("expected ErrInvalidReference, got %v", err)
-	}
-}
-
-func TestShipment_AddEvent_ValidTransition(t *testing.T) {
-	now := time.Now().UTC()
-
-	sh, _, err := NewShipment(
-		"REF-001",
-		"Almaty",
-		"Astana",
-		"John Doe",
-		"TRUCK-01",
-		1000,
-		700,
-		now,
-	)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+func TestStatus_CanTransitionTo(t *testing.T) {
+	tests := []struct {
+		name string
+		from Status
+		to   Status
+		want bool
+	}{
+		{"pending to picked_up", StatusPending, StatusPickedUp, true},
+		{"pending to cancelled", StatusPending, StatusCancelled, true},
+		{"pending to delivered", StatusPending, StatusDelivered, false},
+		{"picked_up to in_transit", StatusPickedUp, StatusInTransit, true},
+		{"in_transit to delivered", StatusInTransit, StatusDelivered, true},
+		{"delivered to cancelled", StatusDelivered, StatusCancelled, false},
 	}
 
-	evt, err := sh.AddEvent(StatusPickedUp, now.Add(time.Minute))
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
-	}
-
-	if sh.CurrentStatus != StatusPickedUp {
-		t.Fatalf("expected status picked_up, got %s", sh.CurrentStatus)
-	}
-
-	if evt.Status != StatusPickedUp {
-		t.Fatalf("expected event status picked_up, got %s", evt.Status)
-	}
-}
-
-func TestShipment_AddEvent_InvalidTransition(t *testing.T) {
-	now := time.Now().UTC()
-
-	sh, _, err := NewShipment(
-		"REF-001",
-		"Almaty",
-		"Astana",
-		"John Doe",
-		"TRUCK-01",
-		1000,
-		700,
-		now,
-	)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	_, err = sh.AddEvent(StatusDelivered, now.Add(time.Minute))
-	if err != ErrInvalidTransition {
-		t.Fatalf("expected ErrInvalidTransition, got %v", err)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.from.CanTransitionTo(tt.to)
+			if got != tt.want {
+				t.Fatalf("expected %v, got %v", tt.want, got)
+			}
+		})
 	}
 }
