@@ -11,6 +11,7 @@ gRPC service for shipment management with PostgreSQL persistence and migrations.
 - PostgreSQL storage
 - SQL migrations
 - Graceful shutdown
+- Manual dependency injection
 - Clean architecture style structure
 
 ## Tech Stack

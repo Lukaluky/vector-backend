@@ -29,10 +29,14 @@ func NewServer(port string, handler *Handler) *Server {
 func (s *Server) Run() error {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", s.port))
 	if err != nil {
-		return fmt.Errorf("listen: %w", err)
+		return fmt.Errorf("listen tcp: %w", err)
 	}
 
-	return s.server.Serve(lis)
+	if err := s.server.Serve(lis); err != nil {
+		return fmt.Errorf("serve grpc: %w", err)
+	}
+
+	return nil
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
@@ -45,7 +49,6 @@ func (s *Server) Shutdown(ctx context.Context) error {
 
 	select {
 	case <-ctx.Done():
-
 		s.server.Stop()
 		return ctx.Err()
 	case <-done:
